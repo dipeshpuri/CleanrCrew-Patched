@@ -1,0 +1,7 @@
+{
+  "name": "Copy of CleanrCrew",
+  "description": "Professional cleaning service booking platform with calendar integration and automated workflows.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
