@@ -15,7 +15,7 @@ export const SERVICE_OPTIONS: ServiceOption[] = [
     hourlyRate: 45,
     icon: '✨',
     recommendedHours: 3,
-    image: "Bathroom.png"
+    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2000&auto=format&fit=crop"
   },
   {
     id: ServiceType.DEEP,
@@ -24,7 +24,7 @@ export const SERVICE_OPTIONS: ServiceOption[] = [
     hourlyRate: 60,
     icon: '🧽',
     recommendedHours: 5,
-    image: "Laundry.png"
+    image: "https://images.unsplash.com/photo-1584622050111-993a426fbf0a?q=80&w=2000&auto=format&fit=crop"
   },
   {
     id: ServiceType.MOVE,
