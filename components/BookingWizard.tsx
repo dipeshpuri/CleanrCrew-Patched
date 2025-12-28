@@ -104,13 +104,97 @@ export default function BookingWizard({ currentUser }: BookingWizardProps) {
 
   const currentService = SERVICE_OPTIONS.find(s => s.id === booking.service);
   
-  // Cost Calculations
-  const subtotal = currentService ? currentService.hourlyRate * booking.hours : 0;
-  const hstAmount = subtotal * HST_RATE;
-  const totalCost = subtotal + hstAmount;
+    // Realistic estimator: compute total man-hours, crew size and pricing
+    function computeEstimate() {
+        if (!currentService) {
+            return {
+                workloadHours: 0,
+                overheadHours: 0,
+                totalManHours: 0,
+                crew: 1,
+                durationPerCleaner: 0,
+                subtotal: 0,
+                tax: 0,
+                total: 0
+            };
+        }
 
-  const depositAmount = totalCost * 0.30;
-  const remainingAmount = totalCost * 0.70;
+        const pricingPremium = 1.20; // charge on the higher side for GTA
+        const hourlyRate = currentService.hourlyRate * pricingPremium;
+
+        const TIMES: any = {
+            Standard: { bedroom: 0.5, bathroom: 0.5, kitchen: 0.75, living: 0.33, desk: 0.25, officeRoom: 0.75 },
+            Deep:     { bedroom: 0.75, bathroom: 1.0, kitchen: 1.5, living: 0.75, desk: 0.5, officeRoom: 1.25 }
+        };
+
+        const condMult: Record<string, number> = { light: 0.9, normal: 1.0, dirty: 1.25, very_dirty: 1.5 };
+        const condition = (booking as any).condition || 'normal';
+
+        let workload = 0;
+
+        if (booking.service === ServiceType.OFFICE) {
+            // Office estimate uses officeEstimator state
+            workload += (officeEstimator.rooms || 0) * TIMES.Standard.officeRoom;
+            workload += (officeEstimator.desks || 0) * TIMES.Standard.desk;
+            workload += (officeEstimator.washrooms || 0) * (TIMES.Standard.bathroom || 0.5);
+            workload += (officeEstimator.cafeteria || 0) * 0.5;
+        } else if (booking.service === ServiceType.MOVE) {
+            // Move-out: base on Deep times + extra overhead
+            const deep = TIMES.Deep;
+            workload += (estimator.bedrooms || 0) * deep.bedroom;
+            workload += (estimator.bathrooms || 0) * deep.bathroom;
+            workload += (estimator.kitchen || 0) * deep.kitchen;
+            workload += (estimator.living || 0) * deep.living;
+            workload = workload * 1.4 + 2.0; // move multiplier + base extra hours
+        } else {
+            const base = booking.service === ServiceType.DEEP ? TIMES.Deep : TIMES.Standard;
+            workload += (estimator.bedrooms || 0) * base.bedroom;
+            workload += (estimator.bathrooms || 0) * base.bathroom;
+            workload += (estimator.kitchen || 0) * base.kitchen;
+            workload += (estimator.living || 0) * base.living;
+        }
+
+        // apply condition multiplier
+        workload *= (condMult[condition] || 1);
+
+        // overhead (travel/setup) - ensure at least 30 minutes
+        const overhead = Math.max(0.5, workload * 0.12);
+
+        let totalManHours = workload + overhead;
+
+        // Enforce minimums: min 2 hours per cleaner
+        const targetPerCleaner = 4; // aim for ~4h per cleaner
+        let crew = (booking as any).requestedCrew && (booking as any).requestedCrew > 0 ? (booking as any).requestedCrew : Math.min(3, Math.max(1, Math.ceil(totalManHours / targetPerCleaner)));
+        const minManHours = crew * 2;
+        if (totalManHours < minManHours) totalManHours = minManHours;
+
+        // round duration per cleaner up to nearest 0.5
+        const durationPerCleaner = Math.ceil((totalManHours / crew) * 2) / 2;
+
+        // cost uses exact man-hours (not the rounded duration)
+        const subtotal = +(hourlyRate * totalManHours).toFixed(2);
+        const tax = +(subtotal * HST_RATE).toFixed(2);
+        const total = +(subtotal + tax).toFixed(2);
+
+        return {
+            workloadHours: +(workload.toFixed(2)),
+            overheadHours: +(overhead.toFixed(2)),
+            totalManHours: +(totalManHours.toFixed(2)),
+            crew,
+            durationPerCleaner,
+            subtotal,
+            tax,
+            total
+        };
+    }
+
+    const estimate = computeEstimate();
+    const subtotal = estimate.subtotal;
+    const hstAmount = estimate.tax;
+    const totalCost = estimate.total;
+
+    const depositAmount = +(totalCost * 0.30).toFixed(2);
+    const remainingAmount = +(totalCost * 0.70).toFixed(2);
 
   // Fetch slots when date or duration changes
   useEffect(() => {
