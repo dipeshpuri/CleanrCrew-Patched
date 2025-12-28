@@ -33,7 +33,7 @@ export const SERVICE_OPTIONS: ServiceOption[] = [
     hourlyRate: 65,
     icon: '📦',
     recommendedHours: 6,
-    image: "Bathroom.png"
+    image: "/Bathroom.png"
   },
   {
     id: ServiceType.OFFICE,
@@ -42,7 +42,7 @@ export const SERVICE_OPTIONS: ServiceOption[] = [
     hourlyRate: 50,
     icon: '🏢',
     recommendedHours: 4,
-    image: "Laundry.png"
+    image: "/Laundry.png"
   }
 ];
 
