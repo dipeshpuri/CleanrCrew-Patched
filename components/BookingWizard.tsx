@@ -377,43 +377,34 @@ export default function BookingWizard({ currentUser }: BookingWizardProps) {
     </div>
   );
 
-  const renderServiceSelection = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">1. Choose your cleaning type</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {SERVICE_OPTIONS.map((option) => (
-          <button
-            key={option.id}
-            onClick={() => setBooking({ ...booking, service: option.id, hours: option.recommendedHours })}
-            className={`border-2 rounded-xl overflow-hidden text-left transition-all hover:shadow-lg flex flex-col ${
-              booking.service === option.id 
-                ? 'border-brand-500 ring-1 ring-brand-500' 
-                : 'border-gray-200 bg-white hover:border-brand-300'
-            }`}
-          >
-            {option.image && (
-              <img 
-                src={option.image} 
-                alt={option.title}
-                className="w-full h-40 object-cover"
-              />
-            )}
-            <div className={`p-6 flex flex-col gap-3 ${booking.service === option.id ? 'bg-brand-50' : 'bg-white'}`}>
-              <div className="text-4xl">{option.icon}</div>
-              <div>
-                <h3 className="font-bold text-lg text-gray-900">{option.title}</h3>
-                <p className="text-sm text-gray-500 mt-1">{option.description}</p>
-              </div>
-              <div className="mt-auto pt-4 flex justify-between items-center w-full">
-                  <span className="font-semibold text-brand-700">${option.hourlyRate}/hr</span>
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600">Rec: {option.recommendedHours}h</span>
-              </div>
+    const renderServiceSelection = () => (
+        <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800">1. Choose your cleaning type</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {SERVICE_OPTIONS.map((option) => (
+                    <button
+                        key={option.id}
+                        onClick={() => setBooking({ ...booking, service: option.id, hours: option.recommendedHours })}
+                        className={`p-6 border-2 rounded-xl text-left transition-all hover:shadow-lg flex flex-col gap-3 ${
+                            booking.service === option.id 
+                                ? 'border-brand-500 bg-brand-50 ring-1 ring-brand-500' 
+                                : 'border-gray-200 bg-white hover:border-brand-300'
+                        }`}
+                    >
+                        <div className="text-4xl">{option.icon}</div>
+                        <div>
+                            <h3 className="font-bold text-lg text-gray-900">{option.title}</h3>
+                            <p className="text-sm text-gray-500 mt-1">{option.description}</p>
+                        </div>
+                        <div className="mt-auto pt-4 flex justify-between items-center w-full">
+                                <span className="font-semibold text-brand-700">${option.hourlyRate}/hr</span>
+                                <span className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600">Rec: {option.recommendedHours}h</span>
+                        </div>
+                    </button>
+                ))}
             </div>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+        </div>
+    );
 
   const renderDurationSelection = () => (
     <div className="space-y-6 max-w-xl mx-auto">
