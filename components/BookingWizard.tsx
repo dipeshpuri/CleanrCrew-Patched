@@ -68,6 +68,13 @@ export default function BookingWizard({ currentUser }: BookingWizardProps) {
       kitchen: 1,
       living: 1
   });
+  // Office-specific estimator
+  const [officeEstimator, setOfficeEstimator] = useState({
+      rooms: 1,
+      cafeteria: 0,
+      desks: 5,
+      washrooms: 1
+  });
 
   // Auto-fill user details if logged in
   useEffect(() => {
@@ -85,6 +92,15 @@ export default function BookingWizard({ currentUser }: BookingWizardProps) {
         }));
     }
   }, [currentUser]);
+
+    // Reset estimator defaults when service changes
+    useEffect(() => {
+        if (booking.service === ServiceType.OFFICE) {
+            setOfficeEstimator({ rooms: 1, cafeteria: 0, desks: 5, washrooms: 1 });
+        } else {
+            setEstimator({ bedrooms: 2, bathrooms: 1, kitchen: 1, living: 1 });
+        }
+    }, [booking.service]);
 
   const currentService = SERVICE_OPTIONS.find(s => s.id === booking.service);
   
@@ -133,20 +149,45 @@ export default function BookingWizard({ currentUser }: BookingWizardProps) {
       setEstimator(prev => {
           const nextValue = Math.max(0, prev[field] + delta);
           const newState = { ...prev, [field]: nextValue };
-          
-          // Calculate new hours based on rooms
+
+          // Calculate new hours based on rooms (residential)
           let hours = 0;
           hours += newState.kitchen * 0.75;
           hours += newState.bathrooms * 0.5;
           hours += newState.bedrooms * 0.3;
           hours += newState.living * 0.25;
-          
+
           const rounded = Math.ceil(hours * 2) / 2;
           const finalHours = Math.max(2, rounded);
-          
+
           // Automatically update booking hours
           setBooking(b => ({ ...b, hours: finalHours }));
-          
+
+          return newState;
+      });
+  };
+
+  const handleOfficeEstimatorChange = (field: keyof typeof officeEstimator, delta: number) => {
+      setOfficeEstimator(prev => {
+          const nextValue = Math.max(0, prev[field] + delta);
+          const newState = { ...prev, [field]: nextValue };
+
+          // Office-specific time calculation (defaults — tweakable):
+          // - rooms: 0.6 hr each
+          // - cafeteria: 1.0 hr each
+          // - desks: 0.06 hr per desk
+          // - washrooms: 0.5 hr each
+          let hours = 0;
+          hours += newState.rooms * 0.6;
+          hours += newState.cafeteria * 1.0;
+          hours += newState.desks * 0.06;
+          hours += newState.washrooms * 0.5;
+
+          const rounded = Math.ceil(hours * 2) / 2;
+          const finalHours = Math.max(2, rounded);
+
+          setBooking(b => ({ ...b, hours: finalHours }));
+
           return newState;
       });
   };
@@ -407,10 +448,21 @@ export default function BookingWizard({ currentUser }: BookingWizardProps) {
             </h3>
             <p className="text-xs text-gray-500 mb-4">Add your rooms below to automatically adjust the booking time.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                 <Counter label="Bedrooms" value={estimator.bedrooms} onChange={(d) => handleEstimatorChange('bedrooms', d)} />
-                 <Counter label="Bathrooms" value={estimator.bathrooms} onChange={(d) => handleEstimatorChange('bathrooms', d)} />
-                 <Counter label="Kitchens" value={estimator.kitchen} onChange={(d) => handleEstimatorChange('kitchen', d)} />
-                 <Counter label="Living Areas" value={estimator.living} onChange={(d) => handleEstimatorChange('living', d)} />
+                {currentService?.id === ServiceType.OFFICE ? (
+                    <>
+                        <Counter label="Rooms" value={officeEstimator.rooms} onChange={(d) => handleOfficeEstimatorChange('rooms', d)} />
+                        <Counter label="Washrooms" value={officeEstimator.washrooms} onChange={(d) => handleOfficeEstimatorChange('washrooms', d)} />
+                        <Counter label="Desks" value={officeEstimator.desks} onChange={(d) => handleOfficeEstimatorChange('desks', d)} />
+                        <Counter label="Cafeterias" value={officeEstimator.cafeteria} onChange={(d) => handleOfficeEstimatorChange('cafeteria', d)} />
+                    </>
+                ) : (
+                    <>
+                        <Counter label="Bedrooms" value={estimator.bedrooms} onChange={(d) => handleEstimatorChange('bedrooms', d)} />
+                        <Counter label="Bathrooms" value={estimator.bathrooms} onChange={(d) => handleEstimatorChange('bathrooms', d)} />
+                        <Counter label="Kitchens" value={estimator.kitchen} onChange={(d) => handleEstimatorChange('kitchen', d)} />
+                        <Counter label="Living Areas" value={estimator.living} onChange={(d) => handleEstimatorChange('living', d)} />
+                    </>
+                )}
             </div>
         </div>
       </div>
